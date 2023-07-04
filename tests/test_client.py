@@ -1,6 +1,6 @@
 import os
 
-# import pytest
+import pytest
 import json
 
 from runregistry.runregistry import (
@@ -12,10 +12,11 @@ from runregistry.runregistry import (
     get_lumisections,
     get_oms_lumisections,
     get_lumisection_ranges,
-    get_oms_lumisection_ranges,
+    # get_oms_lumisection_ranges,
     get_joint_lumisection_ranges,
-    generate_json,
+    # generate_json,
     create_json,
+    setup,
 )
 
 common_run_number = 327743

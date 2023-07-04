@@ -31,10 +31,13 @@ def setup(target):
         use_cookies = False
         target_application = ""
     elif target == "development":
-        # api_url = "https://dev-cmsrunregistry.web.cern.ch/api"
-        api_url = "https://cmsrunregistry-qa.web.cern.ch/api"  # Temporary new SSO Proxy for production
+        api_url = "https://dev-cmsrunregistry.web.cern.ch/api"
         use_cookies = True
         target_application = "dev-cmsrunregistry-sso-proxy"
+    elif target == "qa":
+        api_url = "https://cmsrunregistry-qa.web.cern.ch/api"  # Temporary new SSO Proxy for production
+        use_cookies = True
+        target_application = "cmsrunregistry-sso-proxy"
     elif target == "production":
         api_url = "https://cmsrunregistry.web.cern.ch/api"
         use_cookies = True
@@ -62,7 +65,7 @@ def _get_token():
     """
     # if os.getenv("ENVIRONMENT") == "development":
     #     return None
-    token, expliration_date = get_api_token(
+    token, expiration_date = get_api_token(
         client_id=client_id,
         client_secret=client_secret,
         target_application=target_application,
@@ -79,7 +82,6 @@ def _get_page(
     :return: A page in Run registry
     """
     headers = _get_headers(token=_get_token())
-
     query_filter = kwargs.pop("filter", {})
     if data_type == "runs" and not ignore_filter_transformation:
         query_filter = transform_to_rr_run_filter(run_filter=query_filter)
@@ -96,6 +98,7 @@ def _get_page(
             "sortings": kwargs.pop("sortings", []),
         }
     )
+
     return requests.post(url, headers=headers, data=payload).json()
 
 
