@@ -13,8 +13,7 @@ def read(*parts):
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
@@ -31,7 +30,9 @@ setup(
     description="CMS Run Registry client",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/fabioespinosa/runregistryclient",
+    url="https://github.com/cms-DQM/runregistry_api_client/",
     author_email="f.e@cern.ch",
-    install_requires=["requests", "cernrequests"]
+    maintainer="CMS DQM team",
+    maintainer_email="cms-dqm-coreTeam@cern.ch",
+    install_requires=["requests", "cernrequests"],
 )
