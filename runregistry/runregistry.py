@@ -2,9 +2,11 @@ import os
 import json
 import requests
 import time
-from cernrequests import get_sso_cookies, certs
+from dotenv import load_dotenv
+from cernrequests import get_api_token, get_with_token
 from runregistry.utils import transform_to_rr_run_filter, transform_to_rr_dataset_filter
-import urllib3
+
+load_dotenv()
 
 # Silence unverified HTTPS warning:
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -15,65 +17,57 @@ staging_key = ""
 api_url = ""
 use_cookies = True
 email = "api@api"
+client_id = os.environ.get("SSO_CLIENT_ID")
+client_secret = os.environ.get("SSO_CLIENT_SECRET")
 
 
 def setup(target):
     global api_url
-    global staging_cert
-    global staging_key
+    global target_application
     global use_cookies
+
     if target == "local":
         api_url = "http://localhost:9500"
-        staging_cert = ""
-        staging_key = ""
         use_cookies = False
+        target_application = ""
     elif target == "development":
-        api_url = "https://dev-cmsrunregistry.web.cern.ch/api"
-        staging_cert = "certs/usercert.pem"
-        staging_key = "certs/userkey.pem"
+        # api_url = "https://dev-cmsrunregistry.web.cern.ch/api"
+        api_url = "https://cmsrunregistry-qa.web.cern.ch/api"  # Temporary new SSO Proxy for production
         use_cookies = True
+        target_application = "dev-cmsrunregistry-sso-proxy"
     elif target == "production":
         api_url = "https://cmsrunregistry.web.cern.ch/api"
-        staging_cert = "certs/usercert.pem"
-        staging_key = "certs/userkey.pem"
         use_cookies = True
+        target_application = "cmsrunregistry-sso-proxy"
 
 
-def _get_headers():
+def _get_headers(token: str = None):
     headers = {"Content-type": "application/json"}
     if not use_cookies:
         headers["email"] = email
+    if token:
+        headers["Authorization"] = "Bearer " + token
     return headers
 
 
-setup("production")
+setup(os.environ.get("ENVIRONMENT", "production"))
 
 
-def _get_cookies(url, **kwargs):
-    if not use_cookies:
-        return {"dummy": "yammy"}
+def _get_token():
+    # if not use_cookies:
+    #     return {"dummy": "yammy"}
     """
-    Gets the cookies required to query RR API
-    :return: the cookies required to query Run Registry API. In particular 'connect.sid' is the one we are interested in
+    Gets the token required to query RR API through the CERN SSO.
+    :return: the token required to query Run Registry API. In particular 'connect.sid' is the one we are interested in
     """
-    if os.getenv("ENVIRONMENT") == "development":
-        return None
-    cert = kwargs.pop("cert", None)
-    # If no certificate provided, cernrequests will look in default paths:
-
-    if cert == None and os.getenv("ENVIRONMENT") == "staging":
-        cert = (staging_cert, staging_key)
-
-    cert = cert if cert else certs.default_user_certificate_paths()
-
-    if cert == ("", ""):
-        raise Exception(
-            'No certificate passed, pass one in a tuple as cert=(cert,key), to authenticate your request. Or place them in your /private folder on AFS under the names of "usercert.pem" and "userkey.pem", please read authentication on README.md for more details'
-        )
-    ca_bundle = certs.where()
-    # Skip SSL verification since this must be fixed in the cernrequest package
-    cookies = get_sso_cookies(url, cert, verify=True)
-    return cookies
+    # if os.getenv("ENVIRONMENT") == "development":
+    #     return None
+    token, expliration_date = get_api_token(
+        client_id=client_id,
+        client_secret=client_secret,
+        target_application=target_application,
+    )
+    return token
 
 
 def _get_page(
@@ -84,8 +78,8 @@ def _get_page(
     :param filter: The filter to be transformed into RR syntax, and then sent for querying
     :return: A page in Run registry
     """
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+    headers = _get_headers(token=_get_token())
+
     query_filter = kwargs.pop("filter", {})
     if data_type == "runs" and not ignore_filter_transformation:
         query_filter = transform_to_rr_run_filter(run_filter=query_filter)
@@ -102,7 +96,7 @@ def _get_page(
             "sortings": kwargs.pop("sortings", []),
         }
     )
-    return requests.post(url, cookies=cookies, headers=headers, data=payload).json()
+    return requests.post(url, headers=headers, data=payload).json()
 
 
 def get_dataset_names_of_run(run_number, **kwargs):
@@ -111,8 +105,7 @@ def get_dataset_names_of_run(run_number, **kwargs):
     :return: Array of dataset names of the specified run_number
     """
     url = "{}/get_all_dataset_names_of_run/{}".format(api_url, run_number)
-    cookies = _get_cookies(url, **kwargs)
-    return requests.get(url, cookies=cookies, verify=True).json()
+    return get_with_token(url, target_application=target_application).json()
 
 
 def get_run(run_number, **kwargs):
@@ -249,12 +242,12 @@ def get_datasets(limit=40000, compress_attributes=True, **kwargs):
 
 def _get_lumisection_helper(url, run_number, dataset_name="online", **kwargs):
     """
-    Puts the headers, and cookies for all other lumisection methods
+    Puts the headers for all other lumisection methods
     """
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+
+    headers = _get_headers(token=_get_token())
     payload = json.dumps({"run_number": run_number, "dataset_name": dataset_name})
-    return requests.post(url, cookies=cookies, headers=headers, data=payload).json()
+    return requests.post(url, headers=headers, data=payload).json()
 
 
 def get_lumisections(run_number, dataset_name="online", **kwargs):
@@ -306,10 +299,9 @@ def generate_json(json_logic, **kwargs):
     if isinstance(json_logic, str) == False:
         json_logic = json.dumps(json_logic)
     url = "{}/json_creation/generate".format(api_url)
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+    headers = _get_headers(token=_get_token())
     payload = json.dumps({"json_logic": json_logic})
-    response = requests.post(url, cookies=cookies, headers=headers, data=payload).json()
+    response = requests.post(url, headers=headers, data=payload).json()
     return response["final_json"]
 
 
@@ -321,12 +313,12 @@ def create_json(json_logic, dataset_name_filter, **kwargs):
     if isinstance(json_logic, str) == False:
         json_logic = json.dumps(json_logic)
     url = "{}/json_portal/generate".format(api_url)
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+
+    headers = _get_headers(token=_get_token())
     payload = json.dumps(
         {"json_logic": json_logic, "dataset_name_filter": dataset_name_filter}
     )
-    response = requests.post(url, cookies=cookies, headers=headers, data=payload).json()
+    response = requests.post(url, headers=headers, data=payload).json()
 
     # Id of json:
     id_json = response["id"]
@@ -334,9 +326,11 @@ def create_json(json_logic, dataset_name_filter, **kwargs):
     while True:
         # polling URL:
         url = "{}/json_portal/json".format(api_url)
-        cookies = _get_cookies(url, **kwargs)
+
+        headers = _get_headers(token=_get_token())
+
         payload = json.dumps({"id_json": id_json})
-        response = requests.post(url, cookies=cookies, headers=headers, data=payload)
+        response = requests.post(url, headers=headers, data=payload)
         if response.status_code == 200:
             return response.json()["final_json"]
         else:
@@ -381,19 +375,16 @@ def move_runs(from_, to_, run=None, runs=[], **kwargs):
 
     url = "%s/runs/move_run/%s/%s" % (api_url, from_, to_)
 
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+    headers = _get_headers(token=_get_token())
 
     if run:
         payload = json.dumps({"run_number": run})
-        return requests.post(url, cookies=cookies, headers=headers, data=payload)
+        return requests.post(url, headers=headers, data=payload)
 
     answers = []
     for run_number in runs:
         payload = json.dumps({"run_number": run_number})
-        answer = requests.post(
-            url, cookies=cookies, headers=headers, data=payload
-        ).json()
+        answer = requests.post(url, headers=headers, data=payload).json()
         answers += [answer]
 
     return answers
@@ -408,18 +399,17 @@ def make_significant_runs(run=None, runs=[], **kwargs):
         return
 
     url = "%s/runs/mark_significant" % (api_url)
-    headers = _get_headers()
 
-    cookies = _get_cookies(api_url, **kwargs)
+    headers = _get_headers(token=_get_token())
 
     if run:
         data = {"run_number": run}
-        return requests.post(url, cookies=cookies, headers=headers, json=data)
+        return requests.post(url, headers=headers, json=data)
 
     answers = []
     for run_number in runs:
         data = {"run_number": run}
-        answer = requests.post(url, cookies=cookies, headers=headers, json=data)
+        answer = requests.post(url, headers=headers, json=data)
         answers += [answer]
 
     return answers
@@ -434,17 +424,17 @@ def reset_RR_attributes_and_refresh_runs(run=None, runs=[], **kwargs):
         return
 
     url = "%s/runs/reset_and_refresh_run" % (api_url)
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+
+    headers = _get_headers(token=_get_token())
 
     if run:
         url = "%s/runs/reset_and_refresh_run/%d" % (api_url, run)
-        return requests.post(url, cookies=cookies, headers=headers)
+        return requests.post(url, headers=headers)
 
     answers = []
     for run_number in runs:
         url = "%s/runs/reset_and_refresh_run/%d" % (api_url, run_number)
-        answer = requests.post(url, cookies=cookies, headers=headers)
+        answer = requests.post(url, headers=headers)
         answers += [answer]
 
     return answers
@@ -477,8 +467,7 @@ def edit_rr_lumisections(
 
     url = "%s/lumisections/edit_rr_lumisections" % (api_url)
 
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+    headers = _get_headers(token=_get_token())
     payload = json.dumps(
         {
             "new_lumisection_range": {
@@ -493,7 +482,7 @@ def edit_rr_lumisections(
             "component": component,
         }
     )
-    return requests.post(url, cookies=cookies, headers=headers, data=payload)
+    return requests.post(url, headers=headers, data=payload)
 
 
 # Offline table
@@ -525,23 +514,20 @@ def move_datasets(
 
     url = "%s/datasets/%s/move_dataset/%s/%s" % (api_url, workspace, from_, to_)
 
-    headers = _get_headers()
-    cookies = _get_cookies(url, **kwargs)
+    headers = _get_headers(token=_get_token())
 
     if run:
         payload = json.dumps(
             {"run_number": run, "dataset_name": dataset_name, "workspace": workspace}
         )
-        return requests.post(url, cookies=cookies, headers=headers, data=payload)
+        return requests.post(url, headers=headers, data=payload)
 
     answers = []
     for run_number in runs:
         payload = json.dumps(
             {"run_number": run, "dataset_name": dataset_name, "workspace": workspace}
         )
-        answer = requests.post(
-            url, cookies=cookies, headers=headers, data=payload
-        ).json()
+        answer = requests.post(url, headers=headers, data=payload).json()
         answers += [answer]
 
     return answers

@@ -34,5 +34,5 @@ setup(
     author_email="f.e@cern.ch",
     maintainer="CMS DQM team",
     maintainer_email="cms-dqm-coreTeam@cern.ch",
-    install_requires=["requests", "cernrequests"],
+    install_requires=["requests", "cernrequests", "python-dotenv"],
 )

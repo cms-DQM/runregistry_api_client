@@ -1,2 +1,3 @@
 requests
-cernrequests
+cernrequests>=0.4.1
+python-dotenv
