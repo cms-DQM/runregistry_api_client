@@ -1,4 +1,5 @@
 import os
+
 # import pytest
 import json
 
@@ -28,11 +29,8 @@ def test_with_local_certificate():
     key = "certs/userkey.pem"
     run = get_run(run_number=common_run_number, cert=(cert, key))
     assert run["run_number"] == common_run_number
-    lumisections = get_oms_lumisections(run_number=common_run_number,
-                                        cert=(cert, key))
+    lumisections = get_oms_lumisections(run_number=common_run_number, cert=(cert, key))
     assert len(lumisections) > 0
-    # else:
-    #     pass
 
 
 def test_get_run():
@@ -53,13 +51,7 @@ def test_get_runs():
     assert len(runs) > 0
     # Gets runs that contain lumisections that classified DT as GOOD AND lumsiections that classified hcal as STANDBY
     filter_run = {
-        "run_number": {
-            "and": [{
-                ">": 309000
-            }, {
-                "<": 310000
-            }]
-        },
+        "run_number": {"and": [{">": 309000}, {"<": 310000}]},
         "dt-dt": "GOOD"
         # 'hcal': 'STANDBY'
     }
@@ -69,13 +61,7 @@ def test_get_runs():
     runs = []
 
     filter_run = {
-        "run_number": {
-            "and": [{
-                ">": 309000
-            }, {
-                "<": 310000
-            }]
-        },
+        "run_number": {"and": [{">": 309000}, {"<": 310000}]},
         "tracker-strip": "GOOD",
     }
     runs = get_runs(filter=filter_run)
@@ -85,19 +71,9 @@ def test_get_runs():
 
 def test_get_runs_with_ignore_filter():
     filter_run = {
-        "run_number": {
-            "and": [{
-                ">": 309000
-            }, {
-                "<": 310000
-            }]
-        },
-        "oms_attributes.hlt_key": {
-            "like": "%commissioning2018%"
-        },
-        "triplet_summary.dt-dt.GOOD": {
-            ">": 0
-        },
+        "run_number": {"and": [{">": 309000}, {"<": 310000}]},
+        "oms_attributes.hlt_key": {"like": "%commissioning2018%"},
+        "triplet_summary.dt-dt.GOOD": {">": 0},
     }
     runs = get_runs(filter=filter_run, ignore_filter_transformation=True)
     assert len(runs) > 0
@@ -121,30 +97,16 @@ def test_get_datasets_with_ignore_filter():
     # },
     #                         ignore_filter_transformation=True)
 
-    datasets = get_datasets(filter={
-        "and": [{
-            "run_number": {
-                ">": "327000"
-            }
-        }],
-        "name": {
-            "and": [{
-                "<>": "online"
-            }]
+    datasets = get_datasets(
+        filter={
+            "and": [{"run_number": {">": "327000"}}],
+            "name": {"and": [{"<>": "online"}]},
+            "dataset_attributes.global_state": {
+                "and": [{"or": [{"=": "OPEN"}, {"=": "SIGNOFF"}, {"=": "COMPLETED"}]}]
+            },
         },
-        "dataset_attributes.global_state": {
-            "and": [{
-                "or": [{
-                    "=": "OPEN"
-                }, {
-                    "=": "SIGNOFF"
-                }, {
-                    "=": "COMPLETED"
-                }]
-            }]
-        }
-    },
-                            ignore_filter_transformation=True)
+        ignore_filter_transformation=True,
+    )
     assert len(datasets) > 0
 
 
@@ -155,16 +117,7 @@ def test_get_datasets_with_ignore_filter():
 
 def test_get_runs_not_compressed():
     runs = get_runs(
-        filter={
-            "run_number": {
-                "and": [{
-                    ">": 309000
-                }, {
-                    "<": 310000
-                }]
-            },
-            "dt-dt": "GOOD"
-        },
+        filter={"run_number": {"and": [{">": 309000}, {"<": 310000}]}, "dt-dt": "GOOD"},
         compress_attributes=False,
     )
     assert len(runs) > 0
@@ -174,11 +127,7 @@ def get_runs_with_combined_filter():
     runs = get_runs(
         filter={
             "run_number": {
-                "and": [{
-                    ">": 309000
-                }, {
-                    "<": 310000
-                }]
+                "and": [{">": 309000}, {"<": 310000}]
                 # },
                 # 'hlt_key': {
                 #     'like': '%commissioning2018%'
@@ -186,7 +135,8 @@ def get_runs_with_combined_filter():
                 # 'significant': {
                 #     '=': True
             }
-        })
+        }
+    )
     assert len(runs) > 0
 
 
@@ -196,21 +146,17 @@ def test_get_dataset_names_of_run():
 
 
 def test_get_dataset():
-    dataset = get_dataset(run_number=common_run_number,
-                          dataset_name=common_dataset_name)
+    dataset = get_dataset(
+        run_number=common_run_number, dataset_name=common_dataset_name
+    )
     assert dataset["run_number"] == common_run_number
     assert dataset["name"] == common_dataset_name
 
 
 def test_get_datasets():
     datasets = get_datasets(
-        filter={"run_number": {
-            "and": [{
-                ">": 309000
-            }, {
-                "<": 310000
-            }]
-        }})
+        filter={"run_number": {"and": [{">": 309000}, {"<": 310000}]}}
+    )
     assert len(datasets) > 0
 
 
@@ -222,26 +168,22 @@ def test_get_lumisections():
 def test_get_oms_lumisections():
     lumisections = get_oms_lumisections(common_run_number)
     assert len(lumisections) > 0
-    dataset_lumisections = get_oms_lumisections(common_run_number,
-                                                common_dataset_name)
+    dataset_lumisections = get_oms_lumisections(common_run_number, common_dataset_name)
     assert len(dataset_lumisections) > 0
 
 
 def test_get_lumisection_ranges():
-    lumisections = get_lumisection_ranges(common_run_number,
-                                          common_dataset_name)
+    lumisections = get_lumisection_ranges(common_run_number, common_dataset_name)
     assert len(lumisections) > 0
 
 
 def test_get_oms_lumisection_ranges():
-    lumisections = get_lumisection_ranges(common_run_number,
-                                          common_dataset_name)
+    lumisections = get_lumisection_ranges(common_run_number, common_dataset_name)
     assert len(lumisections) > 0
 
 
 def test_get_joint_lumisection_ranges():
-    lumisections = get_joint_lumisection_ranges(common_run_number,
-                                                common_dataset_name)
+    lumisections = get_joint_lumisection_ranges(common_run_number, common_dataset_name)
     assert len(lumisections) > 0
 
 
@@ -251,21 +193,16 @@ def test_get_collisions18():
 
 
 def test_get_or_run():
-    runs = get_runs(filter={'run_number': {'or': [328762]}})
+    runs = get_runs(filter={"run_number": {"or": [328762]}})
 
 
 def test_get_datasets_with_filter():
     datasets = get_datasets(
         filter={
-            "run_number": {
-                "and": [{
-                    ">": 309000
-                }, {
-                    "<": 310000
-                }]
-            },
+            "run_number": {"and": [{">": 309000}, {"<": 310000}]},
             "tracker-strip": "GOOD",
-        })
+        }
+    )
     assert len(datasets) > 0
 
 
@@ -378,48 +315,36 @@ def test_get_datasets_with_filter():
 #     assert final_json2 is not None
 
 json_logic = {
-  "and": [
-      { ">=": [{ "var": "run.oms.energy" }, 6000] },
-      { "<=": [{ "var": "run.oms.energy" }, 7000] },
-      { ">=": [{ "var": "run.oms.b_field" }, 3.7] },
-      { "in": [ "25ns", { "var": "run.oms.injection_scheme" }] },
-      { "==": [{ "in": [ "WMass", { "var": "run.oms.hlt_key" }] }, False] },
-
-      { "==": [{ "var": "lumisection.rr.dt-dt" }, "GOOD"] },
-      { "==": [{ "var": "lumisection.rr.csc-csc" }, "GOOD"] },
-      { "==": [{ "var": "lumisection.rr.l1t-l1tmu" }, "GOOD"] },
-      { "==": [{ "var": "lumisection.rr.l1t-l1tcalo" }, "GOOD"] },
-      { "==": [{ "var": "lumisection.rr.hlt-hlt" }, "GOOD"] },
-
-      { "==": [{ "var": "lumisection.oms.bpix_ready" }, True] }
-  ]
+    "and": [
+        {">=": [{"var": "run.oms.energy"}, 6000]},
+        {"<=": [{"var": "run.oms.energy"}, 7000]},
+        {">=": [{"var": "run.oms.b_field"}, 3.7]},
+        {"in": ["25ns", {"var": "run.oms.injection_scheme"}]},
+        {"==": [{"in": ["WMass", {"var": "run.oms.hlt_key"}]}, False]},
+        {"==": [{"var": "lumisection.rr.dt-dt"}, "GOOD"]},
+        {"==": [{"var": "lumisection.rr.csc-csc"}, "GOOD"]},
+        {"==": [{"var": "lumisection.rr.l1t-l1tmu"}, "GOOD"]},
+        {"==": [{"var": "lumisection.rr.l1t-l1tcalo"}, "GOOD"]},
+        {"==": [{"var": "lumisection.rr.hlt-hlt"}, "GOOD"]},
+        {"==": [{"var": "lumisection.oms.bpix_ready"}, True]},
+    ]
 }
 
-def test_create_json():
-  json = create_json(json_logic=json_logic, dataset_name_filter="/PromptReco/Collisions2018A/DQM")
-  print(json)
 
+def test_create_json():
+    json = create_json(
+        json_logic=json_logic, dataset_name_filter="/PromptReco/Collisions2018A/DQM"
+    )
+    print(json)
 
 
 def test_custom_filter():
     filter_arg = {
-        'dataset_name': {
-            'like': "%/PromptReco/HICollisions2018A%"
-        },
-        'run_number': {
-            'and': [{
-                '>=': 300000
-            }, {
-                '<=': 330000
-            }]
-        },
-        'class': {
-            'like': 'Collisions18'
-        },
-        'global_state': {
-            'like': 'COMPLETED'
-        },
-        'ecal-ecal': 'BAD'
+        "dataset_name": {"like": "%/PromptReco/HICollisions2018A%"},
+        "run_number": {"and": [{">=": 300000}, {"<=": 330000}]},
+        "class": {"like": "Collisions18"},
+        "global_state": {"like": "COMPLETED"},
+        "ecal-ecal": "BAD",
     }
 
     cert = "certs/usercert.pem"

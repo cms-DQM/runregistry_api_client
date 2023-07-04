@@ -86,8 +86,7 @@ run_triplet_attributes = (
     "l1t-e_gamma",
     "l1t-jet",
     "l1t-energy_sums",
-    "l1t-hf_rings"
-    "rpc-elog",
+    "l1t-hf_rings" "rpc-elog",
     "rpc-lv",
     "rpc-hv",
     "rpc-feb",
@@ -96,8 +95,7 @@ run_triplet_attributes = (
     "tau-tau",
 )
 
-run_rr_attributes = ("class", "state", "significant", "stop_reason",
-                     "short_run")
+run_rr_attributes = ("class", "state", "significant", "stop_reason", "short_run")
 
 run_oms_attributes = (
     "energy",
@@ -176,12 +174,27 @@ run_oms_attributes = (
 # dataset attributes:
 dataset_table_attributes = ("run_number", "dataset_name")
 
-dataset_attributes = ("appeared_in", "global_state", "dt_state", "cms_state",
-                      "csc_state", "hlt_state", "l1t_state", "rpc_state",
-                      "tau_state", "btag_state", "ecal_state", "hcal_state",
-                      "lumi_state", "muon_state", "ctpps_state",
-                      "castor_state", "egamma_state", "jetmet_state",
-                      "tracker_state")
+dataset_attributes = (
+    "appeared_in",
+    "global_state",
+    "dt_state",
+    "cms_state",
+    "csc_state",
+    "hlt_state",
+    "l1t_state",
+    "rpc_state",
+    "tau_state",
+    "btag_state",
+    "ecal_state",
+    "hcal_state",
+    "lumi_state",
+    "muon_state",
+    "ctpps_state",
+    "castor_state",
+    "egamma_state",
+    "jetmet_state",
+    "tracker_state",
+)
 
 dataset_triplet_attributes = (
     "dt-dt",
