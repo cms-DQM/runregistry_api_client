@@ -1,20 +1,21 @@
-[![Build Status](https://travis-ci.org/fabioespinosa/runregistry_api_client.svg?branch=master)](https://travis-ci.org/fabioespinosa/runregistry_api_client)
+![Build Status](https://github.com/cms-DQM/runregistry_api_client/actions/workflows/test_package.yaml/badge.svg)
 
 # Run Registry Client
 
 Python client to retrieve and query data from [CMS Run Registry](https://cmsrunregistry.web.cern.ch).
 
 To switch to [Dev CMS Run Registry](https://dev-cmsrunregistry.web.cern.ch) do:
-```
+
+```python
 import runregistry
-runregistry.setup( "development" )
+runregistry.setup("development")
 ```
+
+Possible values are `"production"`, `"development"` (will use the development deployment as target), `"qa"` (will use the new SSO proxy on the production deployment) or `"local"` (if you have a local instance of Run Registry's backend running).
 
 ## Python version and Virtual env
 
 Python version>=3.6 is required for this package.
-
-To use python 3.6 in lxplus: https://cern.service-now.com/service-portal?id=kb_article&sys_id=3554cdc50a0a8c0800e89d3ccb5ed4a7
 A virtual environment is also required, if you are in lxplus you should run the following commands:
 
 ```bash
@@ -28,42 +29,19 @@ source venv/bin/activate
 pip install runregistry
 ```
 
-## Authentication (Prerequisite)
+## Authentication Prerequisites
 
-You must provide a way for the client to access a [Grid user certificate](https://ca.cern.ch/ca/).
+> **Warning**
+> Grid certificates have been deprecated by CERN. As of version `1.0.0`, the `runregistry` 
+> client only works with a client ID and a secret. 
 
-You can either do this in 3 possible ways:
+You will need to create an SSO registration for your application which is going to be using the runregistry API client. 
 
-1.  Provide the certificate manually (explained below).
-2.  providing a **passwordless** user certificate in the conventional path (first `~/private/` and second `~/.globus/`) (explained below).
-3.  Setting your own path where you store the certificate in an environment variable: `CERN_CERTIFICATE_PATH`
+Instructions on how to do it can be found on the [`cernrequests`](https://github.com/CMSTrackerDPG/cernrequests) GitHub page.
 
-### Provide the certificate manually
+Once you have a client ID and a secret, you will need to store them in a file named `.env`. A [sample file](.env_sample) is provided so that you can edit it and rename it to `.env`. 
 
-1. Download a grid user certificate from [here](https://ca.cern.ch/ca/).
-2. Convert it into public and private key (**The certificates have to be passwordless**.
-   ):
-
-```bash
-mkdir -p ~/private
-# For next commands Import Password is blank, PEM passphrase needs to be set
-openssl pkcs12 -clcerts -nokeys -in myCertificate.p12 -out ~/private/usercert.pem
-openssl pkcs12 -nocerts -in myCertificate.p12 -out ~/private/userkey.tmp.pem
-openssl rsa -in ~/private/userkey.tmp.pem -out ~/private/userkey.pem
-```
-
-If you are in lxplus, everything should be done at this point since the package will first look for `~/private/` and the above commands will set up the certificate in `~/private/`.
-
-If you want to continue providing the certificate manually, you will have to modify the commands above with -out into a folder you remember.
-
-Then use the client in the following way:
-
-```python
-import runregistry
-run = runregistry.get_run(run_number=328762, cert=(cert, key) )
-```
-
-where cert and key are paths to the usercert.pem and userkey.pem generated above.
+Alternatively, you can run `export SSO_CLIENT_ID=...` and `export SSO_CLIENT_SECRET=...` on the same terminal that you will be running your python script in.
 
 ## Usage
 
@@ -407,32 +385,81 @@ generated_json = runregistry.create_json(json_logic=json_logic, dataset_name_fil
 ```
 
 ### Advanced
-You can also manipulate with runs via API:
-1. mark run significant `runregistry.make_significant_runs( run=362761 )`
-2. reset RR attributes and reload data from OMS `runregistry.reset_RR_attributes_and_refresh_runs( run=362761 )`
-3. move runs from one state to another `runregistry.move_runs( "OPEN", "SIGNOFF", run=362761 )`
 
-## Running Tests
+You can also manipulate runs via API:
 
-```
-pytest --cov .
-```
+1. Mark run significant:
+    ```python
+    runregistry.make_significant_runs(run=362761)
+    ```
+2. Reset RR attributes and reload data from OMS:
+    ```python
+    runregistry.reset_RR_attributes_and_refresh_runs(run=362761)
+    ```
+3. Move runs from one state to another: 
+    ```python
+    runregistry.move_runs("OPEN", "SIGNOFF", run=362761)
+    ```
 
 ## Troubleshooting
 
 ### Support
 
-If you have any questions, or the client is not working properly feel free to drop me an email at [f.e@cern.ch](mailto:f.e@cern.ch). Or through skype at fabioe24, i'm also available in mattermost.
+If you have any questions, or the client is not working properly feel free to drop our team an email at [cms-dqm-coreTeam@cern.ch](mailto:cms-dqm-coreTeam@cern.ch).
 
-### To update PIP package
+### [Package developers] Updating the package on PyPI
 
 ```bash
-python setup.py sdist bdist_wheel
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+python3 -m pip install --upgrade pip build twine
+python3 -m build
+python3 -m twine upload --skip-existing --repository pypi dist/*
 ```
+Instructions from [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
+
+## Testing
+
+### Locally
+
+> **TODO**
+> Remove the qa environment after migration.
+
+You will be needing a file named `.env` with the following variables
+```bash
+SSO_CLIENT_ID=<change>
+SSO_CLIENT_SECRET=<change>
+ENVIRONMENT=qa
+```
+While most of the tests work on the development deployment, some fail and need the production one. This is the reason we are setting `ENVIRONMENT=qa`.
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install -r testing-requirements.txt
+pip install -e .
+pytest tests -s
+```
+
+### GitHub actions
+
+Automated GitHub actions run on each push to the repository. The workflow is defined [here](./.github/workflows/test_package.yaml)
+
+The same env variables are needed as in [local testing](#locally), so those are added [here](https://github.com/cms-DQM/runregistry_api_client/settings/secrets/actions).
 
 ## FAQ
 
 ### Does this work with Python 2.7?
 
 No.
+
+### Should I be using `runregistry_api_client` for getting OMS data?
+
+No*.
+
+Our recommendation is to query Run Registry only for data that RR is responsible for.
+
+<small>*It's not that you can't, it's just that this puts extra burden on the application, making it slow for everyone.</small> 
+
+### Is the token stored somewhere and reused?
+
+No, almost every function call gets a new token. This is not ideal, and it may be improved in the future.   

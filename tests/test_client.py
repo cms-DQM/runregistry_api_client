@@ -1,6 +1,6 @@
 import os
 
-# import pytest
+import pytest
 import json
 
 from runregistry.runregistry import (
@@ -12,24 +12,21 @@ from runregistry.runregistry import (
     get_lumisections,
     get_oms_lumisections,
     get_lumisection_ranges,
-    get_oms_lumisection_ranges,
+    # get_oms_lumisection_ranges,
     get_joint_lumisection_ranges,
-    generate_json,
+    # generate_json,
     create_json,
+    setup,
 )
 
 common_run_number = 327743
 common_dataset_name = "/PromptReco/HICosmics18A/DQM"
 
 
-def test_with_local_certificate():
-    # if os.getenv("ENVIRONMENT") == "development":
-    # For this test to pass you must include cert and key in certs/ folder:
-    cert = "certs/usercert.pem"
-    key = "certs/userkey.pem"
-    run = get_run(run_number=common_run_number, cert=(cert, key))
+def test_with_token():
+    run = get_run(run_number=common_run_number)
     assert run["run_number"] == common_run_number
-    lumisections = get_oms_lumisections(run_number=common_run_number, cert=(cert, key))
+    lumisections = get_oms_lumisections(run_number=common_run_number)
     assert len(lumisections) > 0
 
 
@@ -347,9 +344,7 @@ def test_custom_filter():
         "ecal-ecal": "BAD",
     }
 
-    cert = "certs/usercert.pem"
-    key = "certs/userkey.pem"
-    datasets = get_datasets(filter=filter_arg, cert=(cert, key))
+    datasets = get_datasets(filter=filter_arg)
 
 
 # test_custom_filter()
