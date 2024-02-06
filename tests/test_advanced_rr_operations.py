@@ -8,6 +8,7 @@ import runregistry
 
 @pytest.fixture
 def setup_runregistry():
+    print("Connecting to development runregistry")
     runregistry.setup("development")
 
 
@@ -16,18 +17,18 @@ def setup_runregistry():
 # exit()
 def test_move_datasets(setup_runregistry):
     answer = runregistry.move_datasets(
-        "waiting dqm gui",
-        "OPEN",
-        "/PromptReco/Commissioning2021/DQM",
+        from_="waiting dqm gui",
+        to_="OPEN",
+        dataset_name="/PromptReco/Commissioning2021/DQM",
         run=362874,
         workspace="global",
     )
     # TODO: Run also with a token that has permission
     assert answer.status_code == 401
     answer = runregistry.move_datasets(
-        "OPEN",
-        "SIGNOFF",
-        "/PromptReco/Commissioning2021/DQM",
+        from_="OPEN",
+        to_="SIGNOFF",
+        dataset_name="/PromptReco/Commissioning2021/DQM",
         run=362874,
         workspace="ctpps",
     )
