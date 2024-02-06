@@ -518,7 +518,8 @@ def move_datasets(
     from_, to_, dataset_name, workspace="global", run=None, runs=[], **kwargs
 ):
     """
-    move offline dataset/datasets from one state to another
+    Move offline dataset/datasets from one state to another.
+    Requires a privileged token.
     """
     if not run and not runs:
         print("move_datasets(): no 'run' and 'runs' arguments were provided, return")
@@ -559,4 +560,39 @@ def move_datasets(
         answer = requests.post(url, headers=headers, data=payload).json()
         answers.append(answer)
 
+    return answers
+
+
+def change_run_class(run_numbers, new_class):
+    """
+    Method for changing the class of a run (or runs),
+    e.g. from "Commissioning22" to "Cosmics22".
+    Requires a privileged token.
+    """
+    headers = _get_headers(token=_get_token())
+
+    def _execute_request_for_single_run(run_number, new_class):
+        payload = json.dumps({"class": new_class})
+        return requests.put(
+            url="%s/manual_run_edit/%s/class" % (api_url, run_number),
+            headers=headers,
+            data=payload,
+        )
+
+    if not isinstance(new_class, str):
+        raise Exception('Invalid input for "new_class"')
+    answers = []
+    if isinstance(run_numbers, list):
+        for run_number in run_numbers:
+            if not isinstance(run_number, int):
+                raise Exception(
+                    "Invalid run number value found in run_numbers. Please provide a list of numbers."
+                )
+            answers.append(_execute_request_for_single_run(run_number, new_class))
+    elif isinstance(run_numbers, int):
+        answers.append(_execute_request_for_single_run(run_numbers, new_class))
+    else:
+        raise Exception(
+            'Invalid input for "run_numbers". Please provide a list of numbers.'
+        )
     return answers
