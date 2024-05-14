@@ -19,7 +19,7 @@ Python version>=3.6 is required for this package.
 A virtual environment is also required, if you are in lxplus you should run the following commands:
 
 ```bash
-virtualenv -p `which python3` venv
+virtualenv -p $(which python3) venv
 source venv/bin/activate
 ```
 
