@@ -1,7 +1,7 @@
 import os
+import time
 import json
 import requests
-import time
 from dotenv import load_dotenv
 from cernrequests import get_api_token, get_with_token
 from runregistry.utils import (
@@ -478,7 +478,7 @@ def edit_rr_lumisections(
     comment="",
     cause="",
     dataset_name="online",
-    **kwargs
+    **kwargs,
 ):
     """
     WIP edit RR lumisections attributes
@@ -511,7 +511,7 @@ def edit_rr_lumisections(
             "component": component,
         }
     )
-    return requests.post(url, headers=headers, data=payload)
+    return requests.put(url, headers=headers, data=payload)
 
 
 def move_datasets(

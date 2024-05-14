@@ -32,27 +32,27 @@ pip install runregistry
 ## Authentication Prerequisites
 
 > **Warning**
-> Grid certificates have been deprecated by CERN. As of version `1.0.0`, the `runregistry` 
-> client only works with a client ID and a secret. 
+> Grid certificates have been deprecated by CERN. As of version `1.0.0`, the `runregistry`
+> client only works with a client ID and a secret.
 
-You will need to create an SSO registration for your application which is going to be using the runregistry API client. 
+You will need to create an SSO registration for your application which is going to be using the runregistry API client.
 
 Instructions on how to do it can be found on the [`cernrequests`](https://github.com/CMSTrackerDPG/cernrequests) GitHub page.
 
-Once you have a client ID and a secret, you will need to store them in a file named `.env`. A [sample file](.env_sample) is provided so that you can edit it and rename it to `.env`. 
+Once you have a client ID and a secret, you will need to store them in a file named `.env`. A [sample file](.env_sample) is provided so that you can edit it and rename it to `.env`.
 
 Alternatively, you can run `export SSO_CLIENT_ID=...` and `export SSO_CLIENT_SECRET=...` on the same terminal that you will be running your python script in.
 
 ## Usage
 
-### Get a single run (get_run):
+### Get a single run (get_run)
 
 ```python
 import runregistry
 run = runregistry.get_run(run_number=328762)
 ```
 
-### Query several runs (get_runs):
+### Query several runs (get_runs)
 
 ```python
 import runregistry
@@ -396,7 +396,7 @@ You can also manipulate runs via API:
     ```python
     runregistry.reset_RR_attributes_and_refresh_runs(run=362761)
     ```
-3. Move runs from one state to another: 
+3. Move runs from one state to another:
     ```python
     runregistry.move_runs("OPEN", "SIGNOFF", run=362761)
     ```
@@ -416,20 +416,17 @@ python3 -m twine upload --skip-existing --repository pypi dist/*
 ```
 Instructions from [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
 
-## Testing
+## Running the tests
 
 ### Locally
 
-> **TODO**
-> Remove the qa environment after migration.
+You will be needing a file named `.env` with the following variables:
 
-You will be needing a file named `.env` with the following variables
 ```bash
 SSO_CLIENT_ID=<change>
 SSO_CLIENT_SECRET=<change>
-ENVIRONMENT=qa
+ENVIRONMENT=development
 ```
-While most of the tests work on the development deployment, some fail and need the production one. This is the reason we are setting `ENVIRONMENT=qa`.
 
 ```bash
 python3 -m venv venv
@@ -458,8 +455,8 @@ No*.
 
 Our recommendation is to query Run Registry only for data that RR is responsible for.
 
-<small>*It's not that you can't, it's just that this puts extra burden on the application, making it slow for everyone.</small> 
+<small>*It's not that you can't, it's just that this puts extra burden on the application, making it slow for everyone.</small>
 
 ### Is the token stored somewhere and reused?
 
-No, almost every function call gets a new token. This is not ideal, and it may be improved in the future.   
+No, almost every function call gets a new token. This is not ideal, and it may be improved in the future.

@@ -1,14 +1,13 @@
-import sys, os
 import pytest
-
-sys.path.append(os.path.dirname(os.path.realpath("../runregistry")))
-
+import logging
 import runregistry
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def setup_runregistry():
-    print("Connecting to development runregistry")
+    logger.info("Connecting to development runregistry")
     runregistry.setup("development")
 
 
@@ -17,7 +16,7 @@ def setup_runregistry():
 # exit()
 def test_move_datasets(setup_runregistry):
     answer = runregistry.move_datasets(
-        from_="waiting dqm gui",
+        from_=runregistry.WAITING_DQM_GUI_CONSTANT,
         to_="OPEN",
         dataset_name="/PromptReco/Commissioning2021/DQM",
         run=362874,

@@ -47,7 +47,7 @@ def test_get_runs():
     # Gets runs that contain lumisections that classified DT as GOOD AND lumsiections that classified hcal as STANDBY
     filter_run = {
         "run_number": {"and": [{">": 309000}, {"<": 310000}]},
-        "dt-dt": "GOOD"
+        "dt-dt": "GOOD",
         # 'hcal': 'STANDBY'
     }
 
