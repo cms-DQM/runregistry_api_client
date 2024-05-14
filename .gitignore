@@ -1,6 +1,5 @@
 /certs
 
-
 # Created by https://www.gitignore.io/api/python,pycharm+all
 # Edit at https://www.gitignore.io/?templates=python,pycharm+all
 
@@ -86,7 +85,7 @@ modules.xml
 *.ipr
 
 # Sonarlint plugin
- .idea/sonarlint
+.idea/sonarlint
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -210,3 +209,5 @@ dmypy.json
 .venv/
 
 # End of https://www.gitignore.io/api/python,pycharm+all
+
+.env*

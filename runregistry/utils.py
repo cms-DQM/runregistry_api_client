@@ -1,5 +1,3 @@
-import json
-
 from runregistry.attributes import (
     run_table_attributes,
     run_triplet_attributes,
@@ -9,6 +7,23 @@ from runregistry.attributes import (
     dataset_attributes,
     dataset_triplet_attributes,
 )
+
+
+def __parse_runs_arg(runs):
+    """
+    Helper function to parse runs arguments.
+    Returns a list.
+    """
+    if isinstance(runs, int):
+        return [runs]
+    elif isinstance(runs, str):
+        try:
+            runs = int(runs)
+            return [runs]
+        except:
+            return []
+    elif isinstance(runs, list):
+        return runs
 
 
 def transform_to_rr_run_filter(run_filter):

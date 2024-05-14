@@ -1,16 +1,24 @@
 import os
+import time
 import json
 import requests
-import time
 from dotenv import load_dotenv
 from cernrequests import get_api_token, get_with_token
-from runregistry.utils import transform_to_rr_run_filter, transform_to_rr_dataset_filter
+from runregistry.utils import (
+    transform_to_rr_run_filter,
+    transform_to_rr_dataset_filter,
+    __parse_runs_arg,
+)
 
 load_dotenv()
+
 
 # Silence unverified HTTPS warning:
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 PAGE_SIZE = 50
+
+# Offline table
+WAITING_DQM_GUI_CONSTANT = "waiting dqm gui"
 
 staging_cert = ""
 staging_key = ""
@@ -360,7 +368,7 @@ def move_runs(from_, to_, run=None, runs=[], **kwargs):
     move run/runs from one state to another
     """
     if not run and not runs:
-        print("move_runs(): no 'run' and 'runs' arguments were provided, return")
+        print("move_runs(): no 'run' and 'runs' arguments were provided")
         return
 
     states = ["SIGNOFF", "OPEN", "COMPLETED"]
@@ -388,7 +396,7 @@ def move_runs(from_, to_, run=None, runs=[], **kwargs):
     for run_number in runs:
         payload = json.dumps({"run_number": run_number})
         answer = requests.post(url, headers=headers, data=payload).json()
-        answers += [answer]
+        answers.append(answer)
 
     return answers
 
@@ -398,7 +406,7 @@ def make_significant_runs(run=None, runs=[], **kwargs):
     mark run/runs significant
     """
     if not run and not runs:
-        print("move_runs(): no 'run' and 'runs' arguments were provided, return")
+        print("make_significant_runs(): no 'run' and 'runs' arguments were provided")
         return
 
     url = "%s/runs/mark_significant" % (api_url)
@@ -413,32 +421,50 @@ def make_significant_runs(run=None, runs=[], **kwargs):
     for run_number in runs:
         data = {"run_number": run}
         answer = requests.post(url, headers=headers, json=data)
-        answers += [answer]
+        answers.append(answer)
 
     return answers
 
 
-def reset_RR_attributes_and_refresh_runs(run=None, runs=[], **kwargs):
+def reset_RR_attributes_and_refresh_runs(runs=[], **kwargs):
     """
     reset RR attributes and refresh run/runs
     """
-    if not run and not runs:
-        print("move_runs(): no 'run' and 'runs' arguments were provided, return")
+    runs = __parse_runs_arg(runs)
+    if not runs:
+        print(
+            "reset_RR_attributes_and_refresh_runs(): no 'runs' arguments were provided"
+        )
         return
-
-    url = "%s/runs/reset_and_refresh_run" % (api_url)
-
     headers = _get_headers(token=_get_token())
-
-    if run:
-        url = "%s/runs/reset_and_refresh_run/%d" % (api_url, run)
-        return requests.post(url, headers=headers)
-
     answers = []
     for run_number in runs:
         url = "%s/runs/reset_and_refresh_run/%d" % (api_url, run_number)
         answer = requests.post(url, headers=headers)
-        answers += [answer]
+        answers.append(answer)
+
+    return answers
+
+
+def manually_refresh_components_statuses_for_runs(runs=[], **kwargs):
+    """
+    Refreshes all components statuses for the runs specified that have not been
+    changed by shifters.
+    """
+    runs = __parse_runs_arg(runs)
+
+    if not runs:
+        print(
+            "manually_refresh_components_statuses_for_runs(): no 'runs' arguments were provided, return"
+        )
+        return
+
+    headers = _get_headers(token=_get_token())
+    answers = []
+    for run_number in runs:
+        url = "%s/runs/refresh_run/%d" % (api_url, run_number)
+        answer = requests.post(url, headers=headers)
+        answers.append(answer)
 
     return answers
 
@@ -452,7 +478,7 @@ def edit_rr_lumisections(
     comment="",
     cause="",
     dataset_name="online",
-    **kwargs
+    **kwargs,
 ):
     """
     WIP edit RR lumisections attributes
@@ -460,7 +486,7 @@ def edit_rr_lumisections(
     states = ["GOOD", "BAD", "STANDBY", "EXCLUDED", "NONSET"]
     if status not in states:
         print(
-            "move_runs(): get status '",
+            "edit_rr_lumisections(): get status '",
             status,
             "', while allowed statuses are ",
             states,
@@ -485,18 +511,15 @@ def edit_rr_lumisections(
             "component": component,
         }
     )
-    return requests.post(url, headers=headers, data=payload)
-
-
-# Offline table
-WAITING_DQM_GUI_CONSTANT = "waiting dqm gui"
+    return requests.put(url, headers=headers, data=payload)
 
 
 def move_datasets(
     from_, to_, dataset_name, workspace="global", run=None, runs=[], **kwargs
 ):
     """
-    move offline dataset/datasets from one state to another
+    Move offline dataset/datasets from one state to another.
+    Requires a privileged token.
     """
     if not run and not runs:
         print("move_datasets(): no 'run' and 'runs' arguments were provided, return")
@@ -528,9 +551,48 @@ def move_datasets(
     answers = []
     for run_number in runs:
         payload = json.dumps(
-            {"run_number": run, "dataset_name": dataset_name, "workspace": workspace}
+            {
+                "run_number": run_number,
+                "dataset_name": dataset_name,
+                "workspace": workspace,
+            }
         )
         answer = requests.post(url, headers=headers, data=payload).json()
-        answers += [answer]
+        answers.append(answer)
 
+    return answers
+
+
+def change_run_class(run_numbers, new_class):
+    """
+    Method for changing the class of a run (or runs),
+    e.g. from "Commissioning22" to "Cosmics22".
+    Requires a privileged token.
+    """
+    headers = _get_headers(token=_get_token())
+
+    def _execute_request_for_single_run(run_number, new_class):
+        payload = json.dumps({"class": new_class})
+        return requests.put(
+            url="%s/manual_run_edit/%s/class" % (api_url, run_number),
+            headers=headers,
+            data=payload,
+        )
+
+    if not isinstance(new_class, str):
+        raise Exception('Invalid input for "new_class"')
+    answers = []
+    if isinstance(run_numbers, list):
+        for run_number in run_numbers:
+            if not isinstance(run_number, int):
+                raise Exception(
+                    "Invalid run number value found in run_numbers. Please provide a list of numbers."
+                )
+            answers.append(_execute_request_for_single_run(run_number, new_class))
+    elif isinstance(run_numbers, int):
+        answers.append(_execute_request_for_single_run(run_numbers, new_class))
+    else:
+        raise Exception(
+            'Invalid input for "run_numbers". Please provide a list of numbers.'
+        )
     return answers
