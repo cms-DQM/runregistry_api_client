@@ -11,9 +11,6 @@ def setup_runregistry():
     runregistry.setup("development")
 
 
-# answer = runregistry.edit_rr_lumisections(363534, 101, 111, "gem", "GOOD", "API TEST")
-# print( answer, answer.text )
-# exit()
 def test_move_datasets(setup_runregistry):
     answer = runregistry.move_datasets(
         from_=runregistry.WAITING_DQM_GUI_CONSTANT,
@@ -81,5 +78,11 @@ def test_manually_refresh_components_statuses_for_runs_signed_off(setup_runregis
 
 def test_move_runs(setup_runregistry):
     answer = runregistry.move_runs("OPEN", "SIGNOFF", run=362761)
+    # Requires permission
+    assert answer.status_code == 401
+
+
+def test_edit_rr_lumisections(setup_runregistry):
+    answer = runregistry.edit_rr_lumisections(380326, 0, 1, "castor-castor", "GOOD")
     # Requires permission
     assert answer.status_code == 401
