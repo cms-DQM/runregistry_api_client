@@ -52,7 +52,7 @@ def setup(target):
         target_application = "cmsrunregistry-sso-proxy"
 
 
-def _get_headers(token: str = None):
+def _get_headers(token: str = ""):
     headers = {"Content-type": "application/json"}
     if not use_cookies:
         headers["email"] = email
@@ -199,7 +199,7 @@ def get_dataset(run_number, dataset_name="online", **kwargs):
     return dataset[0]
 
 
-def get_datasets(limit=40000, compress_attributes=True, **kwargs):
+def get_datasets(limit=40000, compress_attributes=True, **kwargs) -> list:
     """
     Gets all datasets that match the filter given
     :param compress_attributes: Gets the attributes inside rr_attributes:* and the ones in the DatasetTripletCache (The lumisections insdie the run/dataset) and spreads them over the run object
@@ -226,7 +226,7 @@ def get_datasets(limit=40000, compress_attributes=True, **kwargs):
         print(
             "ERROR: For queries that retrieve more than 20,000 datasets, you must pass a filter into get_datasets, an empty filter get_datasets(filter={}) works"
         )
-        return None
+        return []
     for page_number in range(1, page_count):
         additional_datasets = _get_page(
             page=page_number, url=url, data_type="datasets", **kwargs
@@ -307,7 +307,7 @@ def generate_json(json_logic, **kwargs):
     DO NOT USE, USE THE ONE BELOW (create_json)...
     It receives a json logic configuration and returns a json with lumisections which pass the filter
     """
-    if isinstance(json_logic, str) == False:
+    if not isinstance(json_logic, str):
         json_logic = json.dumps(json_logic)
     url = "{}/json_creation/generate".format(api_url)
     headers = _get_headers(token=_get_token())
@@ -321,7 +321,7 @@ def create_json(json_logic, dataset_name_filter, **kwargs):
     """
     It adds a json to the queue and polls until json is either finished or an error occured
     """
-    if isinstance(json_logic, str) == False:
+    if not isinstance(json_logic, str):
         json_logic = json.dumps(json_logic)
     url = "{}/json_portal/generate".format(api_url)
 
