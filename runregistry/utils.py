@@ -20,7 +20,7 @@ def __parse_runs_arg(runs):
         try:
             runs = int(runs)
             return [runs]
-        except:
+        except Exception:
             return []
     elif isinstance(runs, list):
         return runs
@@ -32,7 +32,7 @@ def transform_to_rr_run_filter(run_filter):
     :param run_filter: a filter that the user inputs into the api client
     :return: returns a filter that runregistry back end understands.
     """
-    if run_filter == None:
+    if not run_filter:
         return {}
     transformed_filter = {}
     for key, value in run_filter.items():
@@ -50,7 +50,7 @@ def transform_to_rr_run_filter(run_filter):
         elif key in run_rr_attributes:
             transformed_filter["rr_attributes." + key] = value
         elif key in run_triplet_attributes:
-            if "=" in value and type(value["="]) == str:
+            if "=" in value and isinstance(value["="], str):
                 # if it is a string, we know for sure its either GOOD, BAD, STANDBY, ETC...
                 value = value["="].upper()
                 if value not in (
@@ -91,7 +91,7 @@ def transform_to_rr_dataset_filter(dataset_filter):
     :param dataset_filter: a filter that the user inputs into the api client
     :return: returns a filter that runregistry back end understands.
     """
-    if dataset_filter == None:
+    if not dataset_filter:
         return {}
     transformed_filter = {}
     for key, value in dataset_filter.items():
@@ -112,7 +112,7 @@ def transform_to_rr_dataset_filter(dataset_filter):
         elif key in dataset_attributes:
             transformed_filter["dataset_attributes." + key] = value
         elif key in dataset_triplet_attributes:
-            if type(value["="]) == str:
+            if isinstance(value["="], str):
                 # if it is a string, we know for sure its either GOOD, BAD, STANDBY, ETC...
                 value = value["="].upper()
             if value not in ("GOOD", "BAD", "STANDBY", "EXCLUDED", "NOTSET", "EMPTY"):
