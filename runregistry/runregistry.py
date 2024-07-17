@@ -251,6 +251,14 @@ def get_datasets(limit=40000, compress_attributes=True, **kwargs) -> list:
     return datasets
 
 
+def get_cycles():
+    url = "{}/cycles/global".format(api_url)
+    headers = _get_headers(token=_get_token())
+    if os.getenv("ENVIRONMENT") == "development":
+        print(url)
+    return requests.get(url, headers=headers).json()
+
+
 def _get_lumisection_helper(url, run_number, dataset_name="online", **kwargs):
     """
     Puts the headers for all other lumisection methods
