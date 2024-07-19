@@ -95,7 +95,14 @@ run_triplet_attributes = (
     "tau-tau",
 )
 
-run_rr_attributes = ("class", "state", "significant", "stop_reason", "short_run")
+run_rr_attributes = (
+    "class",
+    "state",
+    "significant",
+    "stop_reason",
+    "short_run",
+    "run_needs_to_be_updated_manually",
+)
 
 run_oms_attributes = (
     "energy",
