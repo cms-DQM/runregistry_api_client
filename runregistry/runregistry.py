@@ -41,15 +41,15 @@ def setup(target):
     elif target == "development":
         api_url = "https://dev-cmsrunregistry.web.cern.ch/api"
         use_cookies = True
-        target_application = "dev-cmsrunregistry-sso-proxy"
-    elif target == "qa":
-        api_url = "https://cmsrunregistry-qa.web.cern.ch/api"  # Temporary new SSO Proxy for production
-        use_cookies = True
-        target_application = "cmsrunregistry-sso-proxy"
+        target_application = "webframeworks-paas-dev-cmsrunregistry"
+    # elif target == "qa":
+    #     api_url = "https://cmsrunregistry-qa.web.cern.ch/api"  # Temporary new SSO Proxy for production
+    #     use_cookies = True
+    #     target_application = "webframeworks-paas-qa-cmsrunregistry"
     elif target == "production":
         api_url = "https://cmsrunregistry.web.cern.ch/api"
         use_cookies = True
-        target_application = "cmsrunregistry-sso-proxy"
+        target_application = "webframeworks-paas-cmsrunregistry"
 
 
 def _get_headers(token: str = ""):
