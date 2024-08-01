@@ -10,7 +10,12 @@ from runregistry.utils import (
     __parse_runs_arg,
 )
 
-load_dotenv()
+# Look for .env file in the directory of the caller
+# first. If it exists, use it.
+if os.path.exists(os.path.join(os.getcwd(), ".env")):
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".env"))
+else:
+    load_dotenv()
 
 
 # Silence unverified HTTPS warning:
