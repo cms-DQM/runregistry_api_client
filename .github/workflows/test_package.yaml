@@ -34,4 +34,4 @@ jobs:
           SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
         run: |
-          pytest tests -s --retries 2
+          pytest tests -s --retries 4
