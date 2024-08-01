@@ -94,7 +94,7 @@ def test_get_datasets_with_ignore_filter():
 
     datasets = get_datasets(
         filter={
-            "and": [{"run_number": {">": "327000"}}],
+            "and": [{"run_number": {">": "382000"}}],
             "name": {"and": [{"<>": "online"}]},
             "dataset_attributes.global_state": {
                 "and": [{"or": [{"=": "OPEN"}, {"=": "SIGNOFF"}, {"=": "COMPLETED"}]}]
