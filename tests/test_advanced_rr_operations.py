@@ -41,7 +41,8 @@ def test_make_significant_runs(setup_runregistry):
 
 
 def test_reset_RR_attributes_and_refresh_runs_signed_off(setup_runregistry):
-    answers = runregistry.reset_RR_attributes_and_refresh_runs(runs=362761)
+    answers = runregistry.reset_RR_attributes_and_refresh_runs(runs=383843)
+    print(answers[0].text)
     # Cannot refresh runs which are not open
     assert all(
         [
@@ -66,7 +67,7 @@ def test_reset_RR_attributes_and_refresh_runs_open(setup_runregistry):
 
 
 def test_manually_refresh_components_statuses_for_runs_signed_off(setup_runregistry):
-    answers = runregistry.manually_refresh_components_statuses_for_runs(runs=362761)
+    answers = runregistry.manually_refresh_components_statuses_for_runs(runs=383843)
     # Cannot refresh runs which are not open
     assert all(
         [
