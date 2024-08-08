@@ -139,7 +139,9 @@ def get_run(run_number, **kwargs):
     :param run_number: run_number of specified run
     """
     run = get_runs(filter={"run_number": run_number}, **kwargs)
-    if len(run) != 1:
+    if not run:
+        return {}
+    if len(run) > 1:
         raise Exception(
             f"Unexpected number of results returned for run {run_number} ({len(run)}), was expecting exactly 1"
         )
@@ -209,7 +211,9 @@ def get_dataset(run_number, dataset_name="online", **kwargs):
     dataset = get_datasets(
         filter={"run_number": run_number, "dataset_name": dataset_name}, **kwargs
     )
-    if len(dataset) != 1:
+    if not dataset:
+        return {}
+    if len(dataset) > 1:
         raise Exception(
             f"Unexpected number of results returned for dataset {dataset_name} of run {run_number} ({len(dataset)}), was expecting exactly 1"
         )
@@ -423,7 +427,7 @@ def move_runs(from_, to_, run=None, runs=[], **kwargs):
 
     if run:
         payload = json.dumps({"run_number": run})
-        return requests.post(url, headers=headers, data=payload)
+        return [requests.post(url, headers=headers, data=payload)]
 
     answers = []
     for run_number in runs:
@@ -449,7 +453,7 @@ def make_significant_runs(run=None, runs=[], **kwargs):
 
     if run:
         data = {"run_number": run}
-        return requests.post(url, headers=headers, json=data)
+        return [requests.post(url, headers=headers, json=data)]
 
     answers = []
     for run_number in runs:
@@ -565,7 +569,7 @@ def move_datasets(
         payload = json.dumps(
             {"run_number": run, "dataset_name": dataset_name, "workspace": workspace}
         )
-        return requests.post(url, headers=headers, data=payload)
+        return [requests.post(url, headers=headers, data=payload)]
 
     answers = []
     for run_number in runs:
