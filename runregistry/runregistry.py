@@ -427,12 +427,12 @@ def move_runs(from_, to_, run=None, runs=[], **kwargs):
 
     if run:
         payload = json.dumps({"run_number": run})
-        return [requests.post(url, headers=headers, data=payload)]
+        return requests.post(url, headers=headers, data=payload)
 
     answers = []
     for run_number in runs:
         payload = json.dumps({"run_number": run_number})
-        answer = requests.post(url, headers=headers, data=payload).json()
+        answer = requests.post(url, headers=headers, data=payload)
         answers.append(answer)
 
     return answers
@@ -453,7 +453,7 @@ def make_significant_runs(run=None, runs=[], **kwargs):
 
     if run:
         data = {"run_number": run}
-        return [requests.post(url, headers=headers, json=data)]
+        return requests.post(url, headers=headers, json=data)
 
     answers = []
     for run_number in runs:

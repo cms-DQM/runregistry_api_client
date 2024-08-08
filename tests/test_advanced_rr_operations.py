@@ -34,10 +34,18 @@ def test_move_datasets(setup_runregistry):
     assert all([answer.status_code == 401 for answer in answers])
 
 
-def test_make_significant_runs(setup_runregistry):
+def test_make_significant_single_run(setup_runregistry):
     # Get latest run in dev runregistry and make it significant
     run = runregistry.get_runs(limit=1, filter={})[0]
-    answers = runregistry.make_significant_runs(run=run["run_number"])
+    answer = runregistry.make_significant_runs(run=run["run_number"])
+    # requires permission
+    assert answer.status_code == 401
+
+
+def test_make_significant_multi_runs(setup_runregistry):
+    # Get latest run in dev runregistry and make it significant
+    run = runregistry.get_runs(limit=1, filter={})[0]
+    answers = runregistry.make_significant_runs(runs=[run["run_number"]])
     # requires permission
     assert all([answer.status_code == 401 for answer in answers])
 
@@ -86,8 +94,22 @@ def test_move_runs_no_run_arg(setup_runregistry):
         runregistry.move_runs("OPEN", "SIGNOFF")
 
 
-def test_move_runs(setup_runregistry):
-    answers = runregistry.move_runs("OPEN", "SIGNOFF", run=VALID_RUN_NUMBER)
+def test_move_single_run(setup_runregistry):
+    """
+    Unfortunately, this function was given a dual signature, and can return
+    both a single or a list of request responses.
+    """
+    answer = runregistry.move_runs("OPEN", "SIGNOFF", run=VALID_RUN_NUMBER)
+    # Requires permission
+    assert answer.status_code == 401
+
+
+def test_move_multi_runs(setup_runregistry):
+    """
+    Unfortunately, this function was given a dual signature, and can return
+    both a single or a list of request responses.
+    """
+    answers = runregistry.move_runs("OPEN", "SIGNOFF", runs=[VALID_RUN_NUMBER])
     # Requires permission
     assert all([answer.status_code == 401 for answer in answers])
 
