@@ -303,9 +303,25 @@ def get_oms_lumisections(run_number, dataset_name="online", **kwargs):
 
 def get_lumisection_ranges(run_number, dataset_name="online", **kwargs):
     """
-    Gets the lumisection ranges of the specified dataset
+    Gets the lumisection ranges of the specified dataset. Returns
+    a list of dicts, each one containing a lumisection "range", dictated
+    by the 'start' and 'stop' keys of the dict. In the same dict,
+    the status, cause, and comments per component are found.
     """
     url = "{}/lumisections/rr_lumisection_ranges".format(api_url)
+    return _get_lumisection_helper(url, run_number, dataset_name, **kwargs)
+
+
+def get_lumisection_ranges_by_component(run_number, dataset_name="online", **kwargs):
+    """
+    Gets the lumisection ranges of the specified dataset as a dict,
+    where the components are the keys (e.g. 'rpc-rpc'). Each dict value is
+    a list of lumisection "ranges" (dicts) for the specific component. The exact
+    range is dictated by the 'start' and 'stop' keys of the nested dict.
+
+    Similar to get_lumisection_ranges, but organized by component.
+    """
+    url = "{}/lumisections/rr_lumisection_ranges_by_component".format(api_url)
     return _get_lumisection_helper(url, run_number, dataset_name, **kwargs)
 
 
