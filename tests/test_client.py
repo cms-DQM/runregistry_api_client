@@ -10,7 +10,7 @@ from runregistry.runregistry import (
     get_lumisections,
     get_oms_lumisections,
     get_lumisection_ranges,
-    # get_oms_lumisection_ranges,
+    get_oms_lumisection_ranges,
     get_joint_lumisection_ranges,
     generate_json,
     create_json,
@@ -200,7 +200,7 @@ def test_get_lumisection_ranges():
 
 
 def test_get_oms_lumisection_ranges():
-    lumisections = get_lumisection_ranges(VALID_RUN_NUMBER, VALID_DATASET_NAME)
+    lumisections = get_oms_lumisection_ranges(VALID_RUN_NUMBER)
     assert len(lumisections) > 0
 
 
