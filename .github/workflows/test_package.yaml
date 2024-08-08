@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -34,4 +34,4 @@ jobs:
           SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
         run: |
-          pytest tests -s --retries 4
+          pytest tests --retries 2
