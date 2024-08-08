@@ -1,5 +1,6 @@
 import pytest
 import json
+import warnings
 
 from runregistry.runregistry import (
     get_run,
@@ -12,7 +13,7 @@ from runregistry.runregistry import (
     get_lumisection_ranges,
     # get_oms_lumisection_ranges,
     get_joint_lumisection_ranges,
-    # generate_json,
+    generate_json,
     create_json,
     setup,
 )
@@ -199,6 +200,35 @@ def test_get_datasets_with_filter():
         }
     )
     assert len(datasets) > 0
+
+
+def test_generate_json():
+    # https://docs.python.org/3/library/warnings.html#testing-warnings
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        generate_json(
+            """
+{
+    "and": [
+        {
+            "or": [
+                {
+                    "==": [
+                        {
+                            "var": "dataset.name"
+                        },
+                        "/PromptReco/Collisions2018A/DQM"
+                    ]
+                }
+            ]
+        }
+    ]
+}
+        """
+        )
+        assert len(w) == 1
+        assert issubclass(w[-1].category, PendingDeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
 
 
 # UNSAFE:
