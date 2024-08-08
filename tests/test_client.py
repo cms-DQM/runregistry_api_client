@@ -393,17 +393,14 @@ def test_create_json():
 
 def test_custom_filter():
     filter_arg = {
-        "dataset_name": {"like": "%/PromptReco/HICollisions2018A%"},
+        "dataset_name": {"like": "%/PromptReco/Cosmics18CRUZET%"},
         "run_number": {
             "and": [{">=": VALID_RUN_RANGE_START}, {"<=": VALID_RUN_RANGE_STOP}]
         },
-        "class": {"like": "Collisions18"},
+        "class": {"like": "Cosmics18CRUZET"},
         "global_state": {"like": "COMPLETED"},
-        "ecal-ecal": "BAD",
+        "ecal-ecal": "EXCLUDED",
     }
 
     datasets = get_datasets(filter=filter_arg)
     assert datasets
-
-
-# test_custom_filter()
