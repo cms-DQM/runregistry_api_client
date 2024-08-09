@@ -1,5 +1,5 @@
-import pytest
 import json
+import warnings
 
 from runregistry.runregistry import (
     get_run,
@@ -10,43 +10,46 @@ from runregistry.runregistry import (
     get_lumisections,
     get_oms_lumisections,
     get_lumisection_ranges,
-    # get_oms_lumisection_ranges,
+    get_oms_lumisection_ranges,
     get_joint_lumisection_ranges,
-    # generate_json,
+    generate_json,
     create_json,
     setup,
 )
 
-common_run_number = 327743
-common_dataset_name = "/PromptReco/HICosmics18A/DQM"
+VALID_RUN_NUMBER = 327743
+VALID_RUN_RANGE_START = 309000
+VALID_RUN_RANGE_STOP = 310000
 
-
-def test_with_token():
-    run = get_run(run_number=common_run_number)
-    assert run["run_number"] == common_run_number
-    lumisections = get_oms_lumisections(run_number=common_run_number)
-    assert len(lumisections) > 0
+INVALID_RUN_NUMBER = 420420420
+VALID_DATASET_NAME = "/PromptReco/HICosmics18A/DQM"
+INVALID_DATASET_NAME = "/PromptKikiriko/HELLOCosmics18Z/DQM"
 
 
 def test_get_run():
-    run_number = 328762
-    run = get_run(run_number=328762)
-    # print(run)
-    assert run["run_number"] == run_number
-    # Non existent run:
-    run_number = 8888888888
+    run_number = VALID_RUN_NUMBER
+    run = get_run(run_number=VALID_RUN_NUMBER)
+    assert run["run_number"] == VALID_RUN_NUMBER
+    # Non-existent run
+    run_number = INVALID_RUN_NUMBER
     run = get_run(run_number=run_number)
-    assert run == None
+    assert not run
 
 
 def test_get_runs():
-    # Gets runs between run number 309000 and 310000
-    filter_run = {"run_number": {"and": [{">": 309000}, {"<": 310000}]}}
+    # Gets runs between run number VALID_RUN_RANGE_START and VALID_RUN_RANGE_STOP
+    filter_run = {
+        "run_number": {
+            "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
+        }
+    }
     runs = get_runs(filter=filter_run)
     assert len(runs) > 0
     # Gets runs that contain lumisections that classified DT as GOOD AND lumsiections that classified hcal as STANDBY
     filter_run = {
-        "run_number": {"and": [{">": 309000}, {"<": 310000}]},
+        "run_number": {
+            "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
+        },
         "dt-dt": "GOOD",
         # 'hcal': 'STANDBY'
     }
@@ -56,7 +59,9 @@ def test_get_runs():
     runs = []
 
     filter_run = {
-        "run_number": {"and": [{">": 309000}, {"<": 310000}]},
+        "run_number": {
+            "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
+        },
         "tracker-strip": "GOOD",
     }
     runs = get_runs(filter=filter_run)
@@ -66,7 +71,9 @@ def test_get_runs():
 
 def test_get_runs_with_ignore_filter():
     filter_run = {
-        "run_number": {"and": [{">": 309000}, {"<": 310000}]},
+        "run_number": {
+            "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
+        },
         "oms_attributes.hlt_key": {"like": "%commissioning2018%"},
         "triplet_summary.dt-dt.GOOD": {">": 0},
     }
@@ -78,9 +85,9 @@ def test_get_datasets_with_ignore_filter():
     # datasets = get_datasets(filter={
     #     "run_number": {
     #         "and": [{
-    #             ">": 309000
+    #             ">": VALID_RUN_RANGE_START
     #         }, {
-    #             "<": 310000
+    #             "<": VALID_RUN_RANGE_STOP
     #         }]
     #     },
     #     "oms_attributes.hlt_key": {
@@ -94,7 +101,16 @@ def test_get_datasets_with_ignore_filter():
 
     datasets = get_datasets(
         filter={
-            "and": [{"run_number": {">": "382000"}}],
+            "and": [
+                {
+                    "run_number": {
+                        "and": [
+                            {">": VALID_RUN_RANGE_START},
+                            {"<": VALID_RUN_RANGE_STOP},
+                        ]
+                    }
+                }
+            ],
             "name": {"and": [{"<>": "online"}]},
             "dataset_attributes.global_state": {
                 "and": [{"or": [{"=": "OPEN"}, {"=": "SIGNOFF"}, {"=": "COMPLETED"}]}]
@@ -112,7 +128,12 @@ def test_get_datasets_with_ignore_filter():
 
 def test_get_runs_not_compressed():
     runs = get_runs(
-        filter={"run_number": {"and": [{">": 309000}, {"<": 310000}]}, "dt-dt": "GOOD"},
+        filter={
+            "run_number": {
+                "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
+            },
+            "dt-dt": "GOOD",
+        },
         compress_attributes=False,
     )
     assert len(runs) > 0
@@ -122,7 +143,7 @@ def get_runs_with_combined_filter():
     runs = get_runs(
         filter={
             "run_number": {
-                "and": [{">": 309000}, {"<": 310000}]
+                "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
                 # },
                 # 'hlt_key': {
                 #     'like': '%commissioning2018%'
@@ -136,49 +157,55 @@ def get_runs_with_combined_filter():
 
 
 def test_get_dataset_names_of_run():
-    dataset_names = get_dataset_names_of_run(run_number=321777)
+    dataset_names = get_dataset_names_of_run(run_number=VALID_RUN_NUMBER)
     assert len(dataset_names) > 0
 
 
 def test_get_dataset():
+    dataset = get_dataset(run_number=VALID_RUN_NUMBER, dataset_name=VALID_DATASET_NAME)
+    assert dataset["run_number"] == VALID_RUN_NUMBER
+    assert dataset["name"] == VALID_DATASET_NAME
     dataset = get_dataset(
-        run_number=common_run_number, dataset_name=common_dataset_name
+        run_number=INVALID_RUN_NUMBER, dataset_name=INVALID_DATASET_NAME
     )
-    assert dataset["run_number"] == common_run_number
-    assert dataset["name"] == common_dataset_name
+    assert not dataset
 
 
 def test_get_datasets():
     datasets = get_datasets(
-        filter={"run_number": {"and": [{">": 309000}, {"<": 310000}]}}
+        filter={
+            "run_number": {
+                "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
+            }
+        }
     )
     assert len(datasets) > 0
 
 
 def test_get_lumisections():
-    lumisections = get_lumisections(common_run_number, common_dataset_name)
+    lumisections = get_lumisections(VALID_RUN_NUMBER, VALID_DATASET_NAME)
     assert len(lumisections) > 0
 
 
 def test_get_oms_lumisections():
-    lumisections = get_oms_lumisections(common_run_number)
+    lumisections = get_oms_lumisections(VALID_RUN_NUMBER)
     assert len(lumisections) > 0
-    dataset_lumisections = get_oms_lumisections(common_run_number, common_dataset_name)
+    dataset_lumisections = get_oms_lumisections(VALID_RUN_NUMBER, VALID_DATASET_NAME)
     assert len(dataset_lumisections) > 0
 
 
 def test_get_lumisection_ranges():
-    lumisections = get_lumisection_ranges(common_run_number, common_dataset_name)
+    lumisections = get_lumisection_ranges(VALID_RUN_NUMBER, VALID_DATASET_NAME)
     assert len(lumisections) > 0
 
 
 def test_get_oms_lumisection_ranges():
-    lumisections = get_lumisection_ranges(common_run_number, common_dataset_name)
+    lumisections = get_oms_lumisection_ranges(VALID_RUN_NUMBER)
     assert len(lumisections) > 0
 
 
 def test_get_joint_lumisection_ranges():
-    lumisections = get_joint_lumisection_ranges(common_run_number, common_dataset_name)
+    lumisections = get_joint_lumisection_ranges(VALID_RUN_NUMBER, VALID_DATASET_NAME)
     assert len(lumisections) > 0
 
 
@@ -188,17 +215,48 @@ def test_get_collisions18():
 
 
 def test_get_or_run():
-    runs = get_runs(filter={"run_number": {"or": [328762]}})
+    runs = get_runs(filter={"run_number": {"or": [VALID_RUN_NUMBER]}})
 
 
 def test_get_datasets_with_filter():
     datasets = get_datasets(
         filter={
-            "run_number": {"and": [{">": 309000}, {"<": 310000}]},
+            "run_number": {
+                "and": [{">": VALID_RUN_RANGE_START}, {"<": VALID_RUN_RANGE_STOP}]
+            },
             "tracker-strip": "GOOD",
         }
     )
     assert len(datasets) > 0
+
+
+def test_generate_json():
+    # https://docs.python.org/3/library/warnings.html#testing-warnings
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        generate_json(
+            """
+{
+    "and": [
+        {
+            "or": [
+                {
+                    "==": [
+                        {
+                            "var": "dataset.name"
+                        },
+                        "/PromptReco/Collisions2018A/DQM"
+                    ]
+                }
+            ]
+        }
+    ]
+}
+        """
+        )
+        assert len(w) == 1
+        assert issubclass(w[-1].category, PendingDeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
 
 
 # UNSAFE:
@@ -335,14 +393,14 @@ def test_create_json():
 
 def test_custom_filter():
     filter_arg = {
-        "dataset_name": {"like": "%/PromptReco/HICollisions2018A%"},
-        "run_number": {"and": [{">=": 300000}, {"<=": 330000}]},
-        "class": {"like": "Collisions18"},
+        "dataset_name": {"like": "%/PromptReco/Cosmics18CRUZET%"},
+        "run_number": {
+            "and": [{">=": VALID_RUN_RANGE_START}, {"<=": VALID_RUN_RANGE_STOP}]
+        },
+        "class": {"like": "Cosmics18CRUZET"},
         "global_state": {"like": "COMPLETED"},
-        "ecal-ecal": "BAD",
+        "ecal-ecal": "EXCLUDED",
     }
 
     datasets = get_datasets(filter=filter_arg)
-
-
-# test_custom_filter()
+    assert datasets
