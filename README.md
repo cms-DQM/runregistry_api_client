@@ -1,4 +1,6 @@
 ![Build Status](https://github.com/cms-DQM/runregistry_api_client/actions/workflows/test_package.yaml/badge.svg)
+[![codecov](https://codecov.io/github/cms-DQM/runregistry_api_client/graph/badge.svg?token=IRADJ57684)](https://codecov.io/github/cms-DQM/runregistry_api_client)
+[![PyPI version](https://badge.fury.io/py/runregistry.png)](https://badge.fury.io/py/runregistry)
 
 # Run Registry Client
 
@@ -389,17 +391,17 @@ generated_json = runregistry.create_json(json_logic=json_logic, dataset_name_fil
 You can also manipulate runs via API:
 
 1. Mark run significant:
-    ```python
-    runregistry.make_significant_runs(run=362761)
-    ```
+   ```python
+   runregistry.make_significant_runs(run=362761)
+   ```
 2. Reset RR attributes and reload data from OMS:
-    ```python
-    runregistry.reset_RR_attributes_and_refresh_runs(run=362761)
-    ```
+   ```python
+   runregistry.reset_RR_attributes_and_refresh_runs(run=362761)
+   ```
 3. Move runs from one state to another:
-    ```python
-    runregistry.move_runs("OPEN", "SIGNOFF", run=362761)
-    ```
+   ```python
+   runregistry.move_runs("OPEN", "SIGNOFF", run=362761)
+   ```
 
 ## Troubleshooting
 
@@ -414,6 +416,7 @@ python3 -m pip install --upgrade pip build twine
 python3 -m build
 python3 -m twine upload --skip-existing --repository pypi dist/*
 ```
+
 Instructions from [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
 
 ## Running the tests
@@ -451,11 +454,11 @@ No.
 
 ### Should I be using `runregistry_api_client` for getting OMS data?
 
-No*.
+No\*.
 
 Our recommendation is to query Run Registry only for data that RR is responsible for.
 
-<small>*It's not that you can't, it's just that this puts extra burden on the application, making it slow for everyone.</small>
+<small>\*It's not that you can't, it's just that this puts extra burden on the application, making it slow for everyone.</small>
 
 ### Is the token stored somewhere and reused?
 
