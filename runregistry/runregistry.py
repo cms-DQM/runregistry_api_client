@@ -2,7 +2,6 @@ import os
 import time
 import json
 import requests
-import warnings
 from dotenv import load_dotenv
 from cernrequests import get_api_token, get_with_token
 from runregistry.utils import (
@@ -66,6 +65,10 @@ def setup(target):
         api_url = "https://cmsrunregistry.web.cern.ch/api"
         use_cookies = True
         target_application = "webframeworks-paas-cmsrunregistry"
+    else:
+        raise Exception(
+            f'Invalid setup target "{target}". Valid options: "local", "development", "production".'
+        )
 
 
 def _get_headers(token: str = ""):
@@ -345,25 +348,6 @@ def get_joint_lumisection_ranges(run_number, dataset_name="online", **kwargs):
     return _get_lumisection_helper(url, run_number, dataset_name, **kwargs)
 
 
-# DO NOT USE Using compiler (not-safe):
-def generate_json(json_logic, **kwargs):
-    """
-    DO NOT USE, USE THE ONE BELOW (create_json)...
-    It receives a json logic configuration and returns a json with lumisections which pass the filter
-    """
-    warnings.warn(
-        "The generate_json is unsafe and will be deprecated. Please use create_json instead",
-        PendingDeprecationWarning,
-    )
-    if not isinstance(json_logic, str):
-        json_logic = json.dumps(json_logic)
-    url = "{}/json_creation/generate".format(api_url)
-    headers = _get_headers(token=_get_token())
-    payload = json.dumps({"json_logic": json_logic})
-    response = requests.post(url, headers=headers, data=payload).json()
-    return response["final_json"]
-
-
 # Using json portal (safe):
 def create_json(json_logic, dataset_name_filter, **kwargs):
     """
@@ -406,6 +390,15 @@ def create_json(json_logic, dataset_name_filter, **kwargs):
             )
 
 
+def get_datasets_accepted():
+    """
+    Method for fetching current datasets accepted in Offline Run Registry
+    """
+    url = "{}/datasets_accepted".format(api_url)
+    headers = _get_headers(token=_get_token())
+    return requests.get(url, headers=headers).json()
+
+
 # advanced RR operations ==============================================================================
 # Online Table
 def move_runs(from_, to_, run=None, runs=[], **kwargs):
@@ -426,14 +419,17 @@ def move_runs(from_, to_, run=None, runs=[], **kwargs):
     headers = _get_headers(token=_get_token())
 
     if run:
-        payload = json.dumps({"run_number": run})
-        return requests.post(url, headers=headers, data=payload)
+        runs = [run]
 
     answers = []
     for run_number in runs:
         payload = json.dumps({"run_number": run_number})
         answer = requests.post(url, headers=headers, data=payload)
-        answers.append(answer)
+        if answer.status_code != 200:
+            raise Exception(
+                f"Got response {answer.status_code} when moving datasets: {answer.text}"
+            )
+        answers.append(answer.json())
 
     return answers
 
@@ -448,18 +444,20 @@ def make_significant_runs(run=None, runs=[], **kwargs):
         )
 
     url = "%s/runs/mark_significant" % (api_url)
-
     headers = _get_headers(token=_get_token())
 
     if run:
-        data = {"run_number": run}
-        return requests.post(url, headers=headers, json=data)
+        runs = [run]
 
     answers = []
     for run_number in runs:
         data = {"run_number": run}
         answer = requests.post(url, headers=headers, json=data)
-        answers.append(answer)
+        if answer.status_code != 200:
+            raise Exception(
+                f"Got response {answer.status_code} when making runs significant: {answer.text}"
+            )
+        answers.append(answer.json())
 
     return answers
 
@@ -478,7 +476,11 @@ def reset_RR_attributes_and_refresh_runs(runs=[], **kwargs):
     for run_number in runs:
         url = "%s/runs/reset_and_refresh_run/%d" % (api_url, run_number)
         answer = requests.post(url, headers=headers)
-        answers.append(answer)
+        if answer.status_code != 200:
+            raise Exception(
+                f"Got response {answer.status_code} when resetting and refreshing runs: {answer.text}"
+            )
+        answers.append(answer.json())
 
     return answers
 
@@ -500,7 +502,11 @@ def manually_refresh_components_statuses_for_runs(runs=[], **kwargs):
     for run_number in runs:
         url = "%s/runs/refresh_run/%d" % (api_url, run_number)
         answer = requests.post(url, headers=headers)
-        answers.append(answer)
+        if answer.status_code != 200:
+            raise Exception(
+                f"Got response {answer.status_code} when manually refreshing component statuses: {answer.text}"
+            )
+        answers.append(answer.json())
 
     return answers
 
@@ -520,7 +526,7 @@ def edit_rr_lumisections(
     WIP edit RR lumisections attributes
     """
     if status not in LUMISECTION_STATES:
-        raise Exception(
+        raise ValueError(
             f"edit_rr_lumisections(): got status '{status}'",
             f" but allowed statuses are {LUMISECTION_STATES}",
         )
@@ -542,7 +548,12 @@ def edit_rr_lumisections(
             "component": component,
         }
     )
-    return requests.put(url, headers=headers, data=payload)
+    answer = requests.put(url, headers=headers, data=payload)
+    if answer.status_code != 200:
+        raise Exception(
+            f"Got response {answer.status_code} when editing rr lumisections: {answer.text}"
+        )
+    return answer.json()
 
 
 def move_datasets(
@@ -566,10 +577,7 @@ def move_datasets(
     headers = _get_headers(token=_get_token())
 
     if run:
-        payload = json.dumps(
-            {"run_number": run, "dataset_name": dataset_name, "workspace": workspace}
-        )
-        return [requests.post(url, headers=headers, data=payload)]
+        runs = [run]
 
     answers = []
     for run_number in runs:
@@ -580,8 +588,12 @@ def move_datasets(
                 "workspace": workspace,
             }
         )
-        answer = requests.post(url, headers=headers, data=payload).json()
-        answers.append(answer)
+        answer = requests.post(url, headers=headers, data=payload)
+        if answer.status_code != 200:
+            raise Exception(
+                f"Got response {answer.status_code} when moving datasets: {answer.text}"
+            )
+        answers.append(answer.json())
 
     return answers
 
@@ -603,30 +615,26 @@ def change_run_class(run_numbers, new_class):
         )
 
     if not isinstance(new_class, str):
-        raise Exception('Invalid input for "new_class"')
+        raise Exception(f'Invalid input "{new_class}" for "new_class"')
     answers = []
+    # If just one int provided, make it into a list
+    if isinstance(run_numbers, int):
+        run_numbers = [run_numbers]
+
     if isinstance(run_numbers, list):
         for run_number in run_numbers:
             if not isinstance(run_number, int):
                 raise Exception(
                     "Invalid run number value found in run_numbers. Please provide a list of numbers."
                 )
-            answers.append(_execute_request_for_single_run(run_number, new_class))
-    elif isinstance(run_numbers, int):
-        answers.append(_execute_request_for_single_run(run_numbers, new_class))
+            answer = _execute_request_for_single_run(run_number, new_class)
+            if answer.status_code != 200:
+                raise Exception(
+                    f"Got response {answer.status_code} when changing run class: {answer.text}"
+                )
+            answers.append(answer.json())
     else:
         raise Exception(
             'Invalid input for "run_numbers". Please provide a list of numbers.'
         )
     return answers
-
-
-def get_datasets_accepted():
-    """
-    Method for fetching current datasets accepted in Offline Run Registry
-    """
-    url = "{}/datasets_accepted".format(api_url)
-    headers = _get_headers(token=_get_token())
-    if os.getenv("ENVIRONMENT") in ["development", "local"]:
-        print(url)
-    return requests.get(url, headers=headers).json()
