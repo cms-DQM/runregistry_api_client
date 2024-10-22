@@ -619,3 +619,14 @@ def change_run_class(run_numbers, new_class):
             'Invalid input for "run_numbers". Please provide a list of numbers.'
         )
     return answers
+
+
+def get_datasets_accepted():
+    """
+    Method for fetching current datasets accepted in Offline Run Registry
+    """
+    url = "{}/datasets_accepted".format(api_url)
+    headers = _get_headers(token=_get_token())
+    if os.getenv("ENVIRONMENT") in ["development", "local"]:
+        print(url)
+    return requests.get(url, headers=headers).json()
