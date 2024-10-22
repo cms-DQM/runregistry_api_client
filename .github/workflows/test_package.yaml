@@ -34,4 +34,8 @@ jobs:
           SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
         run: |
-          pytest tests --retries 2
+          pytest tests --cov=runregistry --cov-report xml --retries 2
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
