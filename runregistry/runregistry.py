@@ -615,7 +615,7 @@ def change_run_class(run_numbers, new_class):
         )
 
     if not isinstance(new_class, str):
-        raise Exception(f'Invalid input "{new_class}" for "new_class"')
+        raise ValueError(f'Invalid input "{new_class}" for "new_class"')
     answers = []
     # If just one int provided, make it into a list
     if isinstance(run_numbers, int):
@@ -624,7 +624,7 @@ def change_run_class(run_numbers, new_class):
     if isinstance(run_numbers, list):
         for run_number in run_numbers:
             if not isinstance(run_number, int):
-                raise Exception(
+                raise ValueError(
                     "Invalid run number value found in run_numbers. Please provide a list of numbers."
                 )
             answer = _execute_request_for_single_run(run_number, new_class)
@@ -634,7 +634,7 @@ def change_run_class(run_numbers, new_class):
                 )
             answers.append(answer.json())
     else:
-        raise Exception(
+        raise ValueError(
             'Invalid input for "run_numbers". Please provide a list of numbers.'
         )
     return answers
