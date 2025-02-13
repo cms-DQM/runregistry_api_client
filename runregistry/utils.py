@@ -24,6 +24,8 @@ def __parse_runs_arg(runs):
             return []
     elif isinstance(runs, list):
         return runs
+    else:
+        return []
 
 
 def transform_to_rr_run_filter(run_filter):
@@ -32,7 +34,7 @@ def transform_to_rr_run_filter(run_filter):
     :param run_filter: a filter that the user inputs into the api client
     :return: returns a filter that runregistry back end understands.
     """
-    if not run_filter:
+    if not run_filter or not isinstance(run_filter, dict):
         return {}
     transformed_filter = {}
     for key, value in run_filter.items():
@@ -91,7 +93,7 @@ def transform_to_rr_dataset_filter(dataset_filter):
     :param dataset_filter: a filter that the user inputs into the api client
     :return: returns a filter that runregistry back end understands.
     """
-    if not dataset_filter:
+    if not dataset_filter or not isinstance(dataset_filter, dict):
         return {}
     transformed_filter = {}
     for key, value in dataset_filter.items():
