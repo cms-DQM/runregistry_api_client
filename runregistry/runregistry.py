@@ -3,7 +3,7 @@ import time
 import json
 import requests
 from dotenv import load_dotenv
-from cernrequests import get_api_token, get_with_token
+from cernrequests import get_api_token
 from runregistry.utils import (
     transform_to_rr_run_filter,
     transform_to_rr_dataset_filter,
@@ -121,7 +121,7 @@ def get_dataset_names_of_run(run_number, **kwargs):
     :return: Array of dataset names of the specified run_number
     """
     url = "{}/get_all_dataset_names_of_run/{}".format(api_url, run_number)
-    return get_with_token(url, target_application=target_application).json()
+    return requests.get(url, headers=_get_headers(token=_get_token())).json()
 
 
 def get_run(run_number, **kwargs):
