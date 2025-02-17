@@ -24,7 +24,7 @@ with open(os.path.join(here, "README.md")) as f:
 
 setup(
     name="runregistry",
-    version=find_version("runregistry", "__init__.py"),
+    version=find_version("runregistry", "runregistry.py"),
     packages=find_packages(),
     author="Fabio Espinosa",
     description="CMS Run Registry client",

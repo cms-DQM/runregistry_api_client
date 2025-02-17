@@ -1,14 +1,17 @@
 import os
+import sys
 import time
 import json
 import requests
 from dotenv import load_dotenv
-from cernrequests import get_api_token, get_with_token
+from cernrequests import get_api_token
 from runregistry.utils import (
     transform_to_rr_run_filter,
     transform_to_rr_dataset_filter,
     __parse_runs_arg,
 )
+
+__version__ = "1.5.0"
 
 # Look for .env file in the directory of the caller
 # first. If it exists, use it.
@@ -32,12 +35,15 @@ use_cookies = True
 email = "api@api"
 client_id = os.environ.get("SSO_CLIENT_ID")
 client_secret = os.environ.get("SSO_CLIENT_SECRET")
+target_application = ""
+target_name = ""
 
 
 def setup(target):
     global api_url
     global target_application
     global use_cookies
+    global target_name
 
     if target == "local":
         api_url = "http://localhost:9500"
@@ -46,15 +52,17 @@ def setup(target):
     elif target == "development":
         api_url = "https://dev-cmsrunregistry.web.cern.ch/api"
         use_cookies = True
-        target_application = "webframeworks-paas-dev-cmsrunregistry"
-    # elif target == "qa":
-    #     api_url = "https://cmsrunregistry-qa.web.cern.ch/api"  # Temporary new SSO Proxy for production
-    #     use_cookies = True
-    #     target_application = "webframeworks-paas-qa-cmsrunregistry"
+        target_application = "dev-cmsrunregistry-sso-proxy"
     elif target == "production":
         api_url = "https://cmsrunregistry.web.cern.ch/api"
         use_cookies = True
-        target_application = "webframeworks-paas-cmsrunregistry"
+        target_application = "cmsrunregistry-sso-proxy"
+
+    target_name = target
+
+
+def _get_user_agent():
+    return f"runregistry_api_client/{__version__} ({_get_target()}, python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}, requests {requests.__version__})"
 
 
 def _get_headers(token: str = ""):
@@ -63,10 +71,15 @@ def _get_headers(token: str = ""):
         headers["email"] = email
     if token:
         headers["Authorization"] = "Bearer " + token
+    headers["User-Agent"] = _get_user_agent()
     return headers
 
 
 setup(os.environ.get("ENVIRONMENT", "production"))
+
+
+def _get_target():
+    return target_name
 
 
 def _get_token():
@@ -76,8 +89,8 @@ def _get_token():
     Gets the token required to query RR API through the CERN SSO.
     :return: the token required to query Run Registry API. In particular 'connect.sid' is the one we are interested in
     """
-    # if os.getenv("ENVIRONMENT") == "development":
-    #     return None
+    if _get_target() == "local":
+        return ""
     token, expiration_date = get_api_token(
         client_id=client_id,
         client_secret=client_secret,
@@ -100,7 +113,7 @@ def _get_page(
         query_filter = transform_to_rr_run_filter(run_filter=query_filter)
     elif data_type == "datasets" and not ignore_filter_transformation:
         query_filter = transform_to_rr_dataset_filter(dataset_filter=query_filter)
-    if os.getenv("ENVIRONMENT") == "development":
+    if _get_target() in ["development", "local"]:
         print(url)
         print(query_filter)
     payload = json.dumps(
@@ -121,7 +134,7 @@ def get_dataset_names_of_run(run_number, **kwargs):
     :return: Array of dataset names of the specified run_number
     """
     url = "{}/get_all_dataset_names_of_run/{}".format(api_url, run_number)
-    return get_with_token(url, target_application=target_application).json()
+    return requests.get(url, headers=_get_headers(token=_get_token())).json()
 
 
 def get_run(run_number, **kwargs):
@@ -259,7 +272,7 @@ def get_datasets(limit=40000, compress_attributes=True, **kwargs) -> list:
 def get_cycles():
     url = "{}/cycles/global".format(api_url)
     headers = _get_headers(token=_get_token())
-    if os.getenv("ENVIRONMENT") == "development":
+    if _get_target() in ["development", "local"]:
         print(url)
     return requests.get(url, headers=headers).json()
 
