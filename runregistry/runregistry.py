@@ -11,7 +11,7 @@ from runregistry.utils import (
     __parse_runs_arg,
 )
 
-__version__ = "3.1.0-0"
+__version__ = "3.1.1"
 
 # Look for .env file in the directory of the caller
 # first. If it exists, use it.
