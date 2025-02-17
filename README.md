@@ -33,9 +33,8 @@ pip install runregistry
 
 ## Authentication Prerequisites
 
-> **Warning**
-> Grid certificates have been deprecated by CERN. As of version `1.0.0`, the `runregistry`
-> client only works with a client ID and a secret.
+> [!WARNING]
+> Grid certificates have been deprecated by CERN. As of version `1.0.0`, the `runregistry` client only works with a client ID and a secret.
 
 You will need to create an SSO registration for your application which is going to be using the runregistry API client.
 
