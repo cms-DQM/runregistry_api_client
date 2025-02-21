@@ -4,6 +4,9 @@
 
 # Run Registry Client
 
+> [!WARNING]
+> This repository has moved [here](https://gitlab.cern.ch/cms-dqmdc/libraries/runregistry_api_client).
+
 Python client to retrieve and query data from [CMS Run Registry](https://cmsrunregistry.web.cern.ch).
 
 To switch to [Dev CMS Run Registry](https://dev-cmsrunregistry.web.cern.ch) do:
